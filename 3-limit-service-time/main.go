@@ -27,8 +27,6 @@ type User struct {
 // HandleRequest runs the processes requested by users. Returns false
 // if process had to be killed
 func HandleRequest(process func(), u *User) bool {
-	u.mu.Lock()
-	defer u.mu.Unlock()
 	var t1 time.Time
 	if !u.IsPremium {
 		if u.TimeUsed > 10 {
@@ -40,7 +38,9 @@ func HandleRequest(process func(), u *User) bool {
 	process()
 	if !u.IsPremium {
 		t2 := time.Since(t1)
+		u.mu.Lock()
 		u.TimeUsed += int(t2.Seconds())
+		u.mu.Unlock()
 		if u.TimeUsed > 10 {
 			// Kill the process if the current process time or the time accumulated
 			// after the current process exceeded the quota
